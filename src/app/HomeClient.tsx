@@ -188,7 +188,7 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
             {[
               { num: "100+", label: "Workflows Deployed" },
               { num: "99.99%", label: "Pipeline Uptime" },
-              { num: "10M+", label: "Tasks Automated" },
+              { num: "300+", label: "Tasks Automated" },
               { num: "1000s", label: "Hours Saved" }
             ].map((stat, idx) => (
               <div key={idx} className="flex flex-col items-start">

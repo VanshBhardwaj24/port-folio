@@ -1,0 +1,125 @@
+{
+  "name": "Webhook to Salesforce Lead Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-sync-webhook",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "11111111-2222-3333-4444-555555555555",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.email }}",
+              "operation": "contains",
+              "value2": "@"
+            }
+          ]
+        }
+      },
+      "id": "22222222-3333-4444-5555-666666666666",
+      "name": "Validate Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://person.clearbit.com/v2/combined/find?email={{ $json.body.email }}",
+        "authentication": "predefined",
+        "authType": "apiKey",
+        "options": {}
+      },
+      "id": "33333333-4444-5555-6666-777777777777",
+      "name": "Clearbit Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "operation": "upsert",
+        "externalIdFieldName": "Email",
+        "email": "={{ $node[\"Validate Email\"].json.body.email }}",
+        "lastName": "={{ $json.person.name.lastName || 'Unknown' }}",
+        "company": "={{ $json.company.name || 'Self-Employed' }}",
+        "additionalFields": {
+          "FirstName": "={{ $json.person.name.firstName }}",
+          "Description": "=Enriched via n8n automation pipeline. Company size: {{ $json.company.metrics.employeesRange || 'Unknown' }}",
+          "LeadSource": "Website Webhook"
+        }
+      },
+      "id": "44444444-5555-6666-7777-888888888888",
+      "name": "Upsert Salesforce Lead",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "channel": "#alerts-leads-errors",
+        "text": "=❌ n8n Error Alert: Lead sync failed.\n\nError details: {{ $json.message || 'Unknown error' }}\nPayload: {{ JSON.stringify($json.body) }}",
+        "otherOptions": {}
+      },
+      "id": "55555555-6666-7777-8888-999999999999",
+      "name": "Slack Error Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [850, 450]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email": {
+      "main": [
+        [
+          {
+            "node": "Clearbit Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clearbit Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Upsert Salesforce Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

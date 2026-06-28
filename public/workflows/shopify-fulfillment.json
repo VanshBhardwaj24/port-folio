@@ -1,0 +1,118 @@
+{
+  "name": "Shopify Order Fulfillment Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "event": "orders/paid",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "11111111-aaaa-bbbb-cccc-dddddddddddd",
+      "name": "Shopify Paid Trigger",
+      "type": "n8n-nodes-base.shopifyTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "orderNumber": "={{ $json.order_number }}",
+        "orderDate": "={{ $json.created_at }}",
+        "orderStatus": "awaiting_shipment",
+        "billTo": {
+          "name": "={{ $json.billing_address.name }}",
+          "street1": "={{ $json.billing_address.address1 }}",
+          "city": "={{ $json.billing_address.city }}",
+          "state": "={{ $json.billing_address.province_code }}",
+          "postalCode": "={{ $json.billing_address.zip }}",
+          "country": "={{ $json.billing_address.country_code }}"
+        },
+        "shipTo": {
+          "name": "={{ $json.shipping_address.name }}",
+          "street1": "={{ $json.shipping_address.address1 }}",
+          "city": "={{ $json.shipping_address.city }}",
+          "state": "={{ $json.shipping_address.province_code }}",
+          "postalCode": "={{ $json.shipping_address.zip }}",
+          "country": "={{ $json.shipping_address.country_code }}"
+        },
+        "items": "={{ $json.line_items.map(item => ({ name: item.title, quantity: item.quantity, price: item.price })) }}"
+      },
+      "id": "22222222-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "name": "Create ShipStation Order",
+      "type": "n8n-nodes-base.shipstation",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.my-3pl-logistics.com/v1/shipments",
+        "authentication": "predefined",
+        "authType": "apiKey",
+        "bodyParameters": {
+          "orderId": "={{ $json.orderId }}",
+          "carrier": "USPS",
+          "service": "Priority Mail"
+        }
+      },
+      "id": "33333333-cccc-dddd-eeee-ffffffffffff",
+      "name": "Trigger 3PL Shipment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "resource": "fulfillment",
+        "operation": "create",
+        "orderId": "={{ $node[\"Shopify Paid Trigger\"].json.id }}",
+        "trackingInfo": {
+          "number": "={{ $json.trackingNumber }}",
+          "company": "USPS"
+        }
+      },
+      "id": "44444444-dddd-eeee-ffff-000000000000",
+      "name": "Update Shopify Fulfillment",
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Shopify Paid Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create ShipStation Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ShipStation Order": {
+      "main": [
+        [
+          {
+            "node": "Trigger 3PL Shipment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger 3PL Shipment": {
+      "main": [
+        [
+          {
+            "node": "Update Shopify Fulfillment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

@@ -1,0 +1,121 @@
+{
+  "name": "Nightly DB Backup to AWS S3",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "1a1a1a1a-2b2b-3c3c-4d4d-5e5e5e5e5e5e",
+      "name": "Schedule Trigger (2 AM)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "command": "pg_dump -h db.myhost.com -U admin_user my_prod_db | gzip > /tmp/db_backup_$(date +%F).sql.gz"
+      },
+      "id": "2b2b2b2b-3c3c-4d4d-5e5e-6f6f6f6f6f6f",
+      "name": "Run pg_dump & GZIP",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "production-database-backups-bucket",
+        "fileKey": "=db_backups/db_backup_{{ $now.format('YYYY-MM-DD') }}.sql.gz",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "3c3c3c3c-4d4d-5e5e-6f6f-7g7g7g7g7g7g",
+      "name": "Upload to AWS S3",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#ops-backups",
+        "text": "=✅ Database Backup Successful\n\n- File: db_backup_{{ $now.format('YYYY-MM-DD') }}.sql.gz\n- Time: {{ $now.toString() }}\n- Size: {{ $node[\"Run pg_dump & GZIP\"].json.fileSize || 'Compressed' }}\n- Storage: AWS S3",
+        "otherOptions": {}
+      },
+      "id": "4d4d4d4d-5e5e-6f6f-7g7g-8h8h8h8h8h8h",
+      "name": "Slack Success Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [800, 200]
+    },
+    {
+      "parameters": {
+        "channel": "#ops-backups",
+        "text": "=🚨 Database Backup FAILED\n\n- Error: {{ $json.stderr || $json.message || 'Check logs' }}\n- Time: {{ $now.toString() }}",
+        "otherOptions": {}
+      },
+      "id": "5e5e5e5e-6f6f-7g7g-8h8h-9i9i9i9i9i9i",
+      "name": "Slack Failure Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [800, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (2 AM)": {
+      "main": [
+        [
+          {
+            "node": "Run pg_dump & GZIP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run pg_dump & GZIP": {
+      "main": [
+        [
+          {
+            "node": "Upload to AWS S3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Failure Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to AWS S3": {
+      "main": [
+        [
+          {
+            "node": "Slack Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Failure Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

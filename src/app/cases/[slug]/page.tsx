@@ -73,10 +73,13 @@ async function getAiSummary(workflow: any, jsonContent: string): Promise<string>
 
 export default async function CaseStudyPage({ params }: PageProps) {
   const { slug } = await params;
+  console.log(">>> CaseStudyPage called with slug:", slug);
   
   const workflow = await getWorkflowBySlug(slug);
+  console.log(">>> Resolved workflow from getWorkflowBySlug:", slug, "Found:", !!workflow);
 
   if (!workflow) {
+    console.log(">>> Workflow not found, rendering notFound()");
     notFound();
   }
 

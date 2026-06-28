@@ -2,14 +2,21 @@
 
 import { neon } from "@neondatabase/serverless";
 import { Workflow, workflowsData } from "@/components/workflows";
+import { revalidatePath } from "next/cache";
+import fs from "fs/promises";
+import path from "path";
 
-// Initialize Neon Client
+// Initialize Neon Client with Singleton Pattern
+let sqlInstance: any = null;
+
 const getDb = () => {
+  if (sqlInstance) return sqlInstance;
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
     throw new Error("DATABASE_URL is not set in environment variables");
   }
-  return neon(dbUrl);
+  sqlInstance = neon(dbUrl);
+  return sqlInstance;
 };
 
 // Map Database Row back to typescript Workflow model
@@ -107,34 +114,94 @@ export async function initDatabase() {
   }
 }
 
+// Server-side process-lifetime memory cache to solve the 2MB data cache limit for Base64 screenshots
+interface MemoryCache {
+  workflows: Workflow[] | null;
+  workflowBySlug: Map<string, Workflow>;
+}
+
+const memoryCache: MemoryCache = {
+  workflows: null,
+  workflowBySlug: new Map()
+};
+
+function clearMemoryCache() {
+  memoryCache.workflows = null;
+  memoryCache.workflowBySlug.clear();
+}
+
 /**
- * Fetch all workflows from Neon
+ * Fetch all workflows from Neon (with fast server memory cache)
  */
 export async function getWorkflows(): Promise<Workflow[]> {
   try {
-    await initDatabase();
+    if (memoryCache.workflows) {
+      return memoryCache.workflows;
+    }
     const sql = getDb();
     const rows = await sql`SELECT * FROM workflows ORDER BY created_at ASC`;
-    return rows.map(mapRowToWorkflow);
-  } catch (error) {
+    const list = rows.map(mapRowToWorkflow);
+    memoryCache.workflows = list;
+    return list.length === 0 ? workflowsData : list;
+  } catch (error: any) {
+    if (error?.message?.includes("relation \"workflows\" does not exist") || error?.message?.includes("does not exist")) {
+      console.log("Workflows table does not exist, self-healing initialization starting...");
+      await initDatabase();
+      try {
+        const sql = getDb();
+        const rows = await sql`SELECT * FROM workflows ORDER BY created_at ASC`;
+        const list = rows.map(mapRowToWorkflow);
+        memoryCache.workflows = list;
+        return list.length === 0 ? workflowsData : list;
+      } catch (retryError) {
+        console.error("Failed to fetch workflows after initialization:", retryError);
+        return workflowsData;
+      }
+    }
     console.error("Failed to fetch workflows from database, falling back to static data:", error);
     return workflowsData;
   }
 }
 
 /**
- * Fetch single workflow by slug
+ * Fetch single workflow by slug (with fast server memory cache)
  */
 export async function getWorkflowBySlug(slug: string): Promise<Workflow | null> {
   try {
-    await initDatabase();
+    if (memoryCache.workflowBySlug.has(slug)) {
+      return memoryCache.workflowBySlug.get(slug) || null;
+    }
     const sql = getDb();
     const rows = await sql`SELECT * FROM workflows WHERE slug = ${slug} LIMIT 1`;
-    if (rows.length === 0) return null;
-    return mapRowToWorkflow(rows[0]);
-  } catch (error) {
+    if (rows.length === 0) {
+      const staticFlow = workflowsData.find(f => f.slug === slug) || null;
+      if (staticFlow) {
+        memoryCache.workflowBySlug.set(slug, staticFlow);
+      }
+      return staticFlow;
+    }
+    const flow = mapRowToWorkflow(rows[0]);
+    memoryCache.workflowBySlug.set(slug, flow);
+    return flow;
+  } catch (error: any) {
+    if (error?.message?.includes("relation \"workflows\" does not exist") || error?.message?.includes("does not exist")) {
+      console.log("Workflows table does not exist, self-healing initialization starting for single slug...");
+      await initDatabase();
+      try {
+        const sql = getDb();
+        const rows = await sql`SELECT * FROM workflows WHERE slug = ${slug} LIMIT 1`;
+        if (rows.length === 0) {
+          return workflowsData.find(f => f.slug === slug) || null;
+        }
+        const flow = mapRowToWorkflow(rows[0]);
+        memoryCache.workflowBySlug.set(slug, flow);
+        return flow;
+      } catch (retryError) {
+        console.error("Failed to fetch workflow after initialization:", retryError);
+        return workflowsData.find(f => f.slug === slug) || null;
+      }
+    }
     console.error(`Failed to fetch workflow ${slug} from DB:`, error);
-    // Fallback to static
     return workflowsData.find(f => f.slug === slug) || null;
   }
 }
@@ -170,6 +237,9 @@ export async function createWorkflow(flow: Workflow): Promise<boolean> {
         ${flow.mockup || null}
       )
     `;
+    clearMemoryCache();
+    revalidatePath("/");
+    revalidatePath("/workflows");
     return true;
   } catch (error) {
     console.error("Failed to insert workflow in database:", error);
@@ -203,6 +273,9 @@ export async function updateWorkflow(slug: string, flow: Workflow): Promise<bool
         mockup = ${flow.mockup || null}
       WHERE slug = ${slug}
     `;
+    clearMemoryCache();
+    revalidatePath("/");
+    revalidatePath("/workflows");
     return true;
   } catch (error) {
     console.error(`Failed to update workflow ${slug}:`, error);
@@ -218,6 +291,9 @@ export async function deleteWorkflow(slug: string): Promise<boolean> {
     await initDatabase();
     const sql = getDb();
     await sql`DELETE FROM workflows WHERE slug = ${slug}`;
+    clearMemoryCache();
+    revalidatePath("/");
+    revalidatePath("/workflows");
     return true;
   } catch (error) {
     console.error(`Failed to delete workflow ${slug}:`, error);
@@ -233,9 +309,96 @@ export async function resetDatabaseToDefaults(): Promise<boolean> {
     const sql = getDb();
     await sql`DROP TABLE IF EXISTS workflows`;
     await initDatabase();
+    clearMemoryCache();
+    revalidatePath("/");
+    revalidatePath("/workflows");
     return true;
   } catch (error) {
     console.error("Failed to reset database:", error);
     return false;
+  }
+}
+
+/**
+ * Ask the AI agent about the workflow context
+ */
+export async function askWorkflowAgent(slug: string, messages: { role: "user" | "model"; content: string }[]) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return { error: "Gemini API key is not configured. Please add GEMINI_API_KEY to your environment." };
+  }
+
+  const workflow = await getWorkflowBySlug(slug);
+  if (!workflow) {
+    return { error: "Workflow not found." };
+  }
+
+  // Load static file content if available
+  let fileContent = "";
+  if (workflow.filePath) {
+    try {
+      let cleanFilePath = workflow.filePath;
+      if (cleanFilePath.startsWith("/") || cleanFilePath.startsWith("\\")) {
+        cleanFilePath = cleanFilePath.substring(1);
+      }
+      const filePath = path.join(process.cwd(), "public", cleanFilePath);
+      fileContent = await fs.readFile(filePath, "utf-8");
+    } catch (e) {
+      console.warn("Could not read file for chat agent context", e);
+    }
+  }
+
+  const systemPrompt = `You are a Senior n8n Solutions Architect and Automation Engineer.
+You are helping a client understand and customize the following n8n workflow.
+
+Workflow Name: ${workflow.name}
+Category: ${workflow.category}
+Description: ${workflow.longDescription}
+Nodes Used: ${workflow.nodeTypes.join(", ")}
+Requirements: ${workflow.requirements.join(", ")}
+JSON Configuration Details:
+${fileContent || "Custom DB Workflow with standard n8n node connectivity."}
+
+Provide highly specific, technical, and actionable answers. If the client asks how to configure nodes, explain the parameters clearly. If they ask for JavaScript code for a Code node, provide clean, optimized code blocks. Speak with authority, but keep responses digestible. Do not mention HTML tags.`;
+
+  try {
+    const contents = [
+      {
+        role: "user",
+        parts: [{ text: systemPrompt }]
+      },
+      ...messages.map(msg => ({
+        role: msg.role === "user" ? "user" : "model",
+        parts: [{ text: msg.content }]
+      }))
+    ];
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        return { text };
+      }
+    }
+    
+    const errorData = await response.text();
+    console.error("Gemini API call failed:", errorData);
+    return { error: "Failed to generate AI response. Please check logs." };
+  } catch (error: any) {
+    console.error("Error in askWorkflowAgent:", error);
+    return { error: error.message || "An unexpected error occurred." };
   }
 }

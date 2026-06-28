@@ -15,7 +15,8 @@ import {
   Warning,
   Clock,
   Gauge,
-  ShieldCheck
+  ShieldCheck,
+  GithubLogo
 } from "@phosphor-icons/react";
 import { Workflow } from "@/components/workflows";
 import WorkflowIcon from "@/components/WorkflowIcon";
@@ -56,19 +57,28 @@ export default function CaseStudyClient({
 
   const handleDownload = () => {
     try {
+      if (!jsonContent) {
+        showToast("No JSON content available to download", "error");
+        return;
+      }
+
+      const element = document.createElement("a");
+      const file = new Blob([jsonContent], { type: "application/json" });
+      const downloadUrl = URL.createObjectURL(file);
+      
+      element.href = downloadUrl;
+      element.download = `${workflow.slug}.json`;
+      document.body.appendChild(element);
+      element.click();
+      
+      document.body.removeChild(element);
+      URL.revokeObjectURL(downloadUrl);
+
       if (isCustomWorkflow) {
         showToast("Dynamic mock schema downloaded (Source JSON not configured)", "info");
       } else {
         showToast("Workflow JSON downloaded successfully", "success");
       }
-
-      const element = document.createElement("a");
-      const file = new Blob([jsonContent], { type: "application/json" });
-      element.href = URL.createObjectURL(file);
-      element.download = `${workflow.slug}.json`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
     } catch (err) {
       console.error("Download failed:", err);
       showToast("Failed to download JSON file", "error");
@@ -218,13 +228,22 @@ export default function CaseStudyClient({
                 </>
               )}
             </button>
-            <button
+             <button
               onClick={handleDownload}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ink-deep text-white text-xs font-semibold rounded-md hover:bg-ink-deep/90 transition-colors"
             >
               <Download size={14} />
               Download
             </button>
+            <a
+              href="https://github.com/VanshBhardwaj24/port-folio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-accent-lime text-ink-deep text-xs font-bold rounded-md hover:bg-accent-lime/90 transition-all border border-ink-deep/10 shadow-sm"
+            >
+              <GithubLogo size={14} weight="bold" />
+              GitHub Repository
+            </a>
           </div>
         </div>
 

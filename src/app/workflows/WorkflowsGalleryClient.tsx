@@ -416,7 +416,7 @@ export default function WorkflowsGalleryClient({ initialWorkflows }: WorkflowsGa
               Discover Automation Patterns.
             </h1>
             <p className="font-sans text-base text-ink-deep/75">
-              Browse through our live PostgreSQL-backed collection of n8n workflows designed to remove manual friction and orchestrate systems.
+              Browse through my live PostgreSQL-backed collection of n8n workflows designed to remove manual friction and orchestrate systems.
             </p>
           </div>
 

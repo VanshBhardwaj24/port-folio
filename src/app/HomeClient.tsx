@@ -3,16 +3,16 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, Variants } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
   ArrowRight, 
   GitBranch, 
   Check,
   CheckCircle,
   WhatsappLogo,
-  Phone,
   Calendar,
-  EnvelopeSimple
+  EnvelopeSimple,
+  X
 } from "@phosphor-icons/react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -48,6 +48,7 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialWorkflows }: HomeClientProps) {
   const [workflows, setWorkflows] = React.useState<Workflow[]>(initialWorkflows);
+  const [isCalendlyOpen, setIsCalendlyOpen] = React.useState(false);
 
   React.useEffect(() => {
     getWorkflows().then((data) => {
@@ -107,51 +108,40 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
     <>
       <Header />
       
-      {/* Hero Section - Asymmetric layout */}
-      <section className="relative overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32 px-6 md:px-12 max-w-[1280px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left Hero Column */}
+      {/* Hero Section - Centered layout */}
+      <section className="relative overflow-hidden pt-20 pb-24 md:pt-32 md:pb-36 px-6 md:px-12 max-w-[950px] mx-auto">
+        <div className="flex flex-col items-center text-center">
           <motion.div 
-            className="lg:col-span-7 flex flex-col items-start text-left"
+            className="flex flex-col items-center"
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
           >
-            <motion.div 
-              variants={fadeInUp}
-              className="inline-flex items-center gap-2 px-3 py-1 bg-surface-muted rounded-full border border-outline-variant/30 mb-6"
-            >
-              <span className="w-2 h-2 rounded-full bg-accent-lime animate-pulse" />
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-ink-deep/80">
-                PRO-GRADE n8n SOLUTIONS
-              </span>
-            </motion.div>
-
             <motion.h1 
               variants={fadeInUp}
-              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-ink-deep leading-[1.05] mb-6"
+              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-ink-deep leading-[1.05] mb-8 max-w-[800px]"
             >
-              We turn n8n workflows into <span className="underline decoration-accent-lime decoration-wavy decoration-2">production power.</span>
+              I turn n8n workflows into <span className="underline decoration-accent-lime decoration-wavy decoration-2">production power.</span>
             </motion.h1>
 
             <motion.p 
               variants={fadeInUp}
-              className="font-sans text-base sm:text-lg md:text-xl text-ink-deep/85 leading-relaxed max-w-[550px] mb-8"
+              className="font-sans text-base sm:text-lg md:text-xl text-ink-deep/85 leading-relaxed max-w-[650px] mb-10"
             >
-              Everyone else is still in the strategy session. We build resilient, AI-powered automation layers, database pipes, and integrations. Shipped fast. Designed with operational precision.
+              Everyone else is still in the strategy session. I build resilient, AI-powered automation layers, database pipes, and integrations. Shipped fast. Designed with operational precision.
             </motion.p>
 
             <motion.div 
               variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
+              className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto"
             >
-              <Link
-                href="#connect"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent-lime text-ink-deep font-sans font-semibold rounded-lg hover:bg-accent-lime/90 active:scale-[0.98] transition-all border border-ink-deep/10 shadow-[0_4px_12px_rgba(193,225,97,0.15)] text-center"
+              <button
+                onClick={() => setIsCalendlyOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent-lime text-ink-deep font-sans font-semibold rounded-lg hover:bg-accent-lime/90 active:scale-[0.98] transition-all border border-ink-deep/10 shadow-[0_4px_12px_rgba(193,225,97,0.15)] text-center cursor-pointer"
               >
                 Book an Automation Call
                 <ArrowRight size={18} weight="bold" />
-              </Link>
+              </button>
               <Link
                 href="/workflows"
                 className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-ink-deep font-sans font-semibold rounded-lg border border-ink-deep hover:bg-surface-muted/50 active:scale-[0.98] transition-all text-center"
@@ -159,24 +149,6 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
                 Explore Workflows
               </Link>
             </motion.div>
-          </motion.div>
-
-          {/* Right Hero Column (Visual Deck / Mockup) */}
-          <motion.div 
-            className="lg:col-span-5 relative w-full aspect-[4/3] lg:aspect-square rounded-2xl border border-outline-variant/60 bg-surface-muted overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.06)]"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", delay: 0.3, stiffness: 60, damping: 15 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-tr from-surface-muted via-transparent to-accent-lime/10 pointer-events-none z-10" />
-            <Image
-              src="/brandkit_deck.png"
-              alt="Automation Studio Identity & Workflow Deck"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              priority
-            />
           </motion.div>
         </div>
       </section>
@@ -327,10 +299,10 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
               OPERATIONAL FRAMEWORK
             </span>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-ink-deep leading-tight">
-              We Design Resilient Systems, Not One-Off Hacks
+              I Design Resilient Systems, Not One-Off Hacks
             </h2>
             <p className="font-sans text-base text-ink-deep/75 mt-4">
-              Automation is only as good as its stability. We design n8n deployments with enterprise frameworks to ensure 100% processing continuity and clear traceability.
+              Automation is only as good as its stability. I design n8n deployments with enterprise frameworks to ensure 100% processing continuity and clear traceability.
             </p>
           </div>
 
@@ -448,11 +420,9 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
             </a>
 
             {/* Calendly */}
-            <a 
-              href="https://calendly.com/dkkr698"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-start p-8 bg-canvas-bg/15 border border-outline-variant/40 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all group"
+            <button 
+              onClick={() => setIsCalendlyOpen(true)}
+              className="flex flex-col items-start text-left p-8 bg-canvas-bg/15 border border-outline-variant/40 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all group cursor-pointer w-full"
             >
               <div className="w-12 h-12 rounded-xl bg-accent-lime/20 text-ink-deep flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <Calendar size={26} weight="bold" />
@@ -466,7 +436,7 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
               <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline flex items-center gap-1">
                 Open Calendar →
               </span>
-            </a>
+            </button>
 
             {/* Email */}
             <a 
@@ -480,7 +450,7 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
                 Send Email
               </h3>
               <p className="font-sans text-xs text-ink-deep/60 mb-6 leading-relaxed">
-                Drop us a detailed email regarding your workflow blueprint or project specifications.
+                Drop me a detailed email regarding your workflow blueprint or project specifications.
               </p>
               <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline flex items-center gap-1">
                 dkkr698@gmail.com →
@@ -491,6 +461,61 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
       </section>
 
       <Footer />
+
+      {/* Calendly Dialog Modal */}
+      <AnimatePresence>
+        {isCalendlyOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCalendlyOpen(false)}
+              className="fixed inset-0 bg-ink-deep/60 backdrop-blur-sm"
+            />
+            
+            {/* Modal Container */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative bg-white border border-outline-variant/60 rounded-2xl w-full max-w-[950px] h-[650px] md:h-[750px] shadow-2xl flex flex-col overflow-hidden z-10"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
+                <div>
+                  <h3 className="font-display text-lg font-extrabold text-ink-deep">
+                    Schedule an Automation Call
+                  </h3>
+                  <p className="font-sans text-xs text-ink-deep/60">
+                    Select a date and time slot below to connect with me.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setIsCalendlyOpen(false)}
+                  className="w-8 h-8 rounded-full border border-outline-variant/40 flex items-center justify-center text-ink-deep/60 hover:text-ink-deep hover:bg-surface-muted/50 transition-colors cursor-pointer"
+                >
+                  <X size={18} weight="bold" />
+                </button>
+              </div>
+              
+              {/* Iframe content */}
+              <div className="flex-1 bg-surface-muted/10 relative">
+                <iframe 
+                  src="https://calendly.com/dkkr698?hide_landing_page_details=1&hide_gdpr_banner=1" 
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0"
+                  className="w-full h-full"
+                  title="Calendly Scheduling"
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

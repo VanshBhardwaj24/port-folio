@@ -437,11 +437,11 @@ export default function CaseStudyClient({
           Need This Workflow Adapted to Your Stack?
         </h3>
         <p className="font-sans text-sm md:text-base text-white/80 max-w-[620px] mx-auto mb-8">
-          Every tech infrastructure has its own quirks. We can modify this logic, integrate custom authorization headers, write JS function loops, or connect custom databases for your agency.
+          Every tech infrastructure has its own quirks. I can modify this logic, integrate custom authorization headers, write JS function loops, or connect custom databases for your agency.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="mailto:viisesh@bigdoor.ai?subject=Inquiry regarding n8n blueprint: Workflows"
+            href="mailto:dkkr698@gmail.com?subject=Inquiry regarding n8n blueprint: Workflows"
             className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3 bg-accent-lime text-ink-deep font-sans font-bold text-sm rounded-lg hover:bg-accent-lime/90 active:scale-[0.98] transition-all"
           >
             Request Customization

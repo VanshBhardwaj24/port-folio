@@ -5,7 +5,7 @@ import path from "path";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { workflowsData } from "@/components/workflows";
-import { getWorkflowBySlug } from "@/app/actions";
+import { getWorkflowBySlug, getWorkflows } from "@/app/actions";
 import CaseStudyClient from "./CaseStudyClient";
 
 interface PageProps {
@@ -15,11 +15,13 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return workflowsData.map((flow) => ({
+  const workflows = await getWorkflows();
+  return workflows.map((flow) => ({
     slug: flow.slug,
   }));
 }
 
+export const revalidate = 60;
 export const dynamicParams = true;
 
 // Call Gemini API to get a professional summary

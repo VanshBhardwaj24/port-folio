@@ -3,6 +3,7 @@
 import { neon } from "@neondatabase/serverless";
 import { Workflow, workflowsData } from "@/components/workflows";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import fs from "fs/promises";
 import path from "path";
 
@@ -207,9 +208,67 @@ export async function getWorkflowBySlug(slug: string): Promise<Workflow | null> 
 }
 
 /**
+ * Check if the admin session cookie is set and valid
+ */
+export async function checkSessionActive(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("portfolio_admin_session");
+    return session?.value === "active";
+  } catch (e) {
+    console.error("Error checking session active:", e);
+    return false;
+  }
+}
+
+/**
+ * Verify passcode and set a secure cookie if valid
+ */
+export async function verifyAdminPasscode(passcode: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const targetPasscode = process.env.ADMIN_PASSCODE || "n8n-demo";
+    if (passcode === targetPasscode) {
+      const cookieStore = await cookies();
+      cookieStore.set("portfolio_admin_session", "active", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: "/",
+        sameSite: "strict"
+      });
+      return { success: true };
+    }
+    return { success: false, error: "Invalid passcode" };
+  } catch (error: any) {
+    console.error("Error in verifyAdminPasscode:", error);
+    return { success: false, error: error.message || "Server error" };
+  }
+}
+
+/**
+ * Log out admin by clearing cookie
+ */
+export async function logoutAdmin(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("portfolio_admin_session");
+    return true;
+  } catch (e) {
+    console.error("Error logging out admin:", e);
+    return false;
+  }
+}
+
+/**
  * Create a new workflow (INSERT)
  */
 export async function createWorkflow(flow: Workflow): Promise<boolean> {
+  const isAuth = await checkSessionActive();
+  if (!isAuth) {
+    console.error("Unauthorized createWorkflow attempt");
+    return false;
+  }
+
   try {
     await initDatabase();
     const sql = getDb();
@@ -251,6 +310,12 @@ export async function createWorkflow(flow: Workflow): Promise<boolean> {
  * Update an existing workflow (UPDATE)
  */
 export async function updateWorkflow(slug: string, flow: Workflow): Promise<boolean> {
+  const isAuth = await checkSessionActive();
+  if (!isAuth) {
+    console.error("Unauthorized updateWorkflow attempt");
+    return false;
+  }
+
   try {
     await initDatabase();
     const sql = getDb();
@@ -287,6 +352,12 @@ export async function updateWorkflow(slug: string, flow: Workflow): Promise<bool
  * Delete a workflow (DELETE)
  */
 export async function deleteWorkflow(slug: string): Promise<boolean> {
+  const isAuth = await checkSessionActive();
+  if (!isAuth) {
+    console.error("Unauthorized deleteWorkflow attempt");
+    return false;
+  }
+
   try {
     await initDatabase();
     const sql = getDb();
@@ -305,6 +376,12 @@ export async function deleteWorkflow(slug: string): Promise<boolean> {
  * Resets the database to defaults
  */
 export async function resetDatabaseToDefaults(): Promise<boolean> {
+  const isAuth = await checkSessionActive();
+  if (!isAuth) {
+    console.error("Unauthorized resetDatabaseToDefaults attempt");
+    return false;
+  }
+
   try {
     const sql = getDb();
     await sql`DROP TABLE IF EXISTS workflows`;

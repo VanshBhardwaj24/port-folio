@@ -27,7 +27,10 @@ import {
   createWorkflow, 
   updateWorkflow, 
   deleteWorkflow, 
-  resetDatabaseToDefaults 
+  resetDatabaseToDefaults,
+  verifyAdminPasscode,
+  checkSessionActive,
+  logoutAdmin
 } from "@/app/actions";
 
 interface WorkflowsGalleryClientProps {
@@ -90,6 +93,12 @@ export default function WorkflowsGalleryClient({ initialWorkflows }: WorkflowsGa
 
   useEffect(() => {
     loadData();
+    checkSessionActive().then((active) => {
+      if (active) {
+        setIsPasscodeUnlocked(true);
+        setIsAdminMode(true);
+      }
+    });
   }, []);
 
   // Pre-fill the form with clean, professional template values for fast testing
@@ -159,13 +168,14 @@ export default function WorkflowsGalleryClient({ initialWorkflows }: WorkflowsGa
     setEditingWorkflow(null);
   };
 
-  const handlePasscodeSubmit = (e: React.FormEvent) => {
+  const handlePasscodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passphraseInput === "n8n-demo") {
+    const result = await verifyAdminPasscode(passphraseInput);
+    if (result.success) {
       setIsPasscodeUnlocked(true);
       setIsAdminMode(true);
     } else {
-      alert("Invalid passphrase. Use 'n8n-demo' to enable admin controls.");
+      alert(result.error || "Invalid passcode.");
     }
   };
 
@@ -432,7 +442,7 @@ export default function WorkflowsGalleryClient({ initialWorkflows }: WorkflowsGa
                 </div>
                 <input
                   type="password"
-                  placeholder="Enter 'n8n-demo'"
+                  placeholder="Enter Passphrase"
                   value={passphraseInput}
                   onChange={(e) => setPassphraseInput(e.target.value)}
                   className="w-full px-3 py-1.5 bg-canvas-bg/50 border border-outline-variant/30 rounded-lg text-xs focus:outline-none focus:border-accent-lime font-sans"
@@ -454,7 +464,8 @@ export default function WorkflowsGalleryClient({ initialWorkflows }: WorkflowsGa
                     </span>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      await logoutAdmin();
                       setIsPasscodeUnlocked(false);
                       setIsAdminMode(false);
                       setPassphraseInput("");

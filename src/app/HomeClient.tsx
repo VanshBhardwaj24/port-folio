@@ -186,10 +186,10 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {[
-              { num: "200+", label: "Products Launched" },
-              { num: "5.0", label: "Client Star Rating" },
-              { num: "$500M+", label: "Raised by Clients" },
-              { num: "5x", label: "Faster Development" }
+              { num: "100+", label: "Workflows Deployed" },
+              { num: "99.99%", label: "Pipeline Uptime" },
+              { num: "10M+", label: "Tasks Automated" },
+              { num: "1000s", label: "Hours Saved" }
             ].map((stat, idx) => (
               <div key={idx} className="flex flex-col items-start">
                 <span className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-ink-deep tracking-tight mb-2">
@@ -408,9 +408,9 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
         </div>
       </section>
 
-      {/* Connect / CTA Section */}
-      <section id="connect" className="py-24 md:py-32 px-6 md:px-12 max-w-[1100px] mx-auto">
-        <div className="bg-white border border-outline-variant/60 rounded-3xl p-8 md:p-16 shadow-[0_16px_40px_rgba(0,0,0,0.02)] relative overflow-hidden">
+      {/* Connect / CTA Section - Large Shadcn Style */}
+      <section id="connect" className="py-24 md:py-32 px-6 md:px-12 max-w-[1200px] mx-auto">
+        <div className="bg-white border border-outline-variant/50 rounded-3xl p-8 md:p-16 shadow-[0_16px_40px_rgba(0,0,0,0.02)] relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-accent-lime" />
           
           <div className="text-center max-w-[650px] mx-auto mb-16">
@@ -420,89 +420,70 @@ export default function HomeClient({ initialWorkflows }: HomeClientProps) {
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-ink-deep tracking-tight mb-6">
               Ready to Streamline Your Operations?
             </h2>
-            <p className="font-sans text-base text-ink-deep/80 leading-relaxed">
+            <p className="font-sans text-base text-ink-deep/75 leading-relaxed">
               Choose your preferred channel below to discuss your custom n8n workflows, CRM automation pipelines, or AI integrations.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* WhatsApp */}
             <a 
-              href="https://wa.me/919999999999"
+              href="https://wa.me/918340582336"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-start p-6 bg-canvas-bg/30 border border-outline-variant/50 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] transition-all group"
+              className="flex flex-col items-start p-8 bg-canvas-bg/15 border border-outline-variant/40 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <WhatsappLogo size={26} weight="fill" />
               </div>
-              <h3 className="font-display text-base font-bold text-ink-deep mb-1">
+              <h3 className="font-display text-lg font-bold text-ink-deep mb-2">
                 WhatsApp Chat
               </h3>
-              <p className="font-sans text-xs text-ink-deep/60 mb-4">
-                Message us for quick queries and instant chat.
+              <p className="font-sans text-xs text-ink-deep/60 mb-6 leading-relaxed">
+                Send a message for direct, real-time responses to custom blueprint inquiries.
               </p>
-              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline">
-                Chat on WhatsApp →
+              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline flex items-center gap-1">
+                +91 83405 82336 →
               </span>
             </a>
 
             {/* Calendly */}
             <a 
-              href="https://calendly.com/viisesh-bigdoor"
+              href="https://calendly.com/dkkr698"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-start p-6 bg-canvas-bg/30 border border-outline-variant/50 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] transition-all group"
+              className="flex flex-col items-start p-8 bg-canvas-bg/15 border border-outline-variant/40 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-accent-lime/20 text-ink-deep flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-accent-lime/20 text-ink-deep flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <Calendar size={26} weight="bold" />
               </div>
-              <h3 className="font-display text-base font-bold text-ink-deep mb-1">
+              <h3 className="font-display text-lg font-bold text-ink-deep mb-2">
                 Book a Meeting
               </h3>
-              <p className="font-sans text-xs text-ink-deep/60 mb-4">
-                Schedule a 15-minute automation consulting session.
+              <p className="font-sans text-xs text-ink-deep/60 mb-6 leading-relaxed">
+                Schedule a 15-minute consulting call to explore your automation integrations.
               </p>
-              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline">
+              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline flex items-center gap-1">
                 Open Calendar →
-              </span>
-            </a>
-
-            {/* Direct Phone */}
-            <a 
-              href="tel:+91999999999"
-              className="flex flex-col items-start p-6 bg-canvas-bg/30 border border-outline-variant/50 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] transition-all group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                <Phone size={26} weight="bold" />
-              </div>
-              <h3 className="font-display text-base font-bold text-ink-deep mb-1">
-                Call Us
-              </h3>
-              <p className="font-sans text-xs text-ink-deep/60 mb-4">
-                Direct telephonic line for immediate inquiries.
-              </p>
-              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline">
-                +91 99999 99999 →
               </span>
             </a>
 
             {/* Email */}
             <a 
-              href="mailto:viisesh@bigdoor.ai"
-              className="flex flex-col items-start p-6 bg-canvas-bg/30 border border-outline-variant/50 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] transition-all group"
+              href="mailto:dkkr698@gmail.com"
+              className="flex flex-col items-start p-8 bg-canvas-bg/15 border border-outline-variant/40 rounded-2xl hover:border-accent-lime hover:bg-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-ink-deep/10 text-ink-deep flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-ink-deep/10 text-ink-deep flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <EnvelopeSimple size={26} weight="bold" />
               </div>
-              <h3 className="font-display text-base font-bold text-ink-deep mb-1">
+              <h3 className="font-display text-lg font-bold text-ink-deep mb-2">
                 Send Email
               </h3>
-              <p className="font-sans text-xs text-ink-deep/60 mb-4">
-                Drop us a detailed email regarding your blueprint request.
+              <p className="font-sans text-xs text-ink-deep/60 mb-6 leading-relaxed">
+                Drop us a detailed email regarding your workflow blueprint or project specifications.
               </p>
-              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline">
-                viisesh@bigdoor.ai →
+              <span className="font-mono text-xs text-ink-deep/80 font-bold mt-auto group-hover:underline flex items-center gap-1">
+                dkkr698@gmail.com →
               </span>
             </a>
           </div>
